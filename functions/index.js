@@ -1,5 +1,6 @@
 const { onRequest } = require("firebase-functions/v2/https");
 const cors = require("cors")({ origin: true });
+const secret = require("./secret.json");
 
 // const logger = require("firebase-functions/logger");
 // const cheerio = require('cheerio');
@@ -7,12 +8,15 @@ const axios = require("axios");
 const admin = require("firebase-admin");
 const nodemailer = require("nodemailer");
 const functions = require("firebase-functions");
+const { openAiToken } = secret;
+
 
 admin.initializeApp();
 const db = admin.firestore();
 db.settings({ ignoreUndefinedProperties: true });
 
 seedCollections();
+
 
 // Create and deploy your first functions
 // https://firebase.google.com/docs/functions/get-started
@@ -25,7 +29,7 @@ seedCollections();
 const openAI = async function (prompt) {
   const headers = {
     "Content-Type": "application/json",
-    Authorization: `Bearer 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`,
+    Authorization: `Bearer ${openAiToken}`,
   };
 
   const data = {
