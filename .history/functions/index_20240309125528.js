@@ -440,8 +440,9 @@ exports.createWpPost = onRequest(async (request, response) => {
 exports.createPostComment = onRequest(async (request, response) => {
   cors(request, response, async () => {
     console.log("Request body:", request.body);
-
-          var  openAIResponse=   await openAI(`This is a a post from facebook - ${request.body}. 
+    //const { userToken, title, content, category } = request.body;
+    try {
+          await openAI(`This is a a post from facebook - ${request.body}. 
           you are a politicak advaisor in south africa, write ma a suitable comment that will parsuade voting for your candidate.
           the comment should be in english and writen with a friendly tone`,4096);
   
@@ -477,8 +478,14 @@ exports.createPostComment = onRequest(async (request, response) => {
           // );
         }
       }
+      await generateWpPost(userToken, title, content, category);
+      return response
+        .status(200)
+        .json({ message: "Post created successfully" });
     } catch (error) {
       console.error("Error creating post:", error);
+      return response.status(500).json({ error: "Failed to create post" });
+    }
   });
 });
 

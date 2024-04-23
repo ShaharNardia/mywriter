@@ -88,9 +88,8 @@ export default {
   },
   methods: {
     sendItem(item) {
-        console.log(item);
       axios
-        .post("https://createwppost-ibnrirhwvq-uc.a.run.app", item)
+        .post("your_api_endpoint", item)
         .then((response) => {
           console.log(response);
           // Handle the response as needed
@@ -178,12 +177,9 @@ export default {
           };
 
           const [categories, posts, pages] = await Promise.all([
-            fetchAllItems("/wp-json/wp/v2/categories", "name"),
-            fetchAllItems("/wp-json/wp/v2/posts", "title"),
-            fetchAllItems("/wp-json/wp/v2/pages", "title"),
-            // fetchAllItems("/wp-json/wp/v2/categories", "name,description"),
-            // fetchAllItems("/wp-json/wp/v2/posts", "title,content"),
-            // fetchAllItems("/wp-json/wp/v2/pages", "title,content"),
+            fetchAllItems("/wp-json/wp/v2/categories", "name,description"),
+            fetchAllItems("/wp-json/wp/v2/posts", "title,content"),
+            fetchAllItems("/wp-json/wp/v2/pages", "title,content"),
           ]);
 
           categories.forEach(async (category) => {
@@ -200,9 +196,7 @@ export default {
             let title = post.title.rendered.replace("rendered:", "");
             let content = post.content.rendered
               .replace(/<[^>]*>?/gm, "")
-              .replace("rendered:", "")
-              .replace(/\t/g, "")
-              .replace(/\n/g, "");
+              .replace("rendered:", "");
             await addDoc(colRef, {
               title,
               content,
@@ -216,9 +210,7 @@ export default {
             let title = page.title.rendered.replace("rendered:", "");
             let content = page.content.rendered
               .replace(/<[^>]*>?/gm, "")
-              .replace("rendered:", "")
-              .replace(/\t/g, "")
-              .replace(/\n/g, "");
+              .replace("rendered:", "");
             await addDoc(colRef, {
               title,
               content,

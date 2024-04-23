@@ -178,12 +178,9 @@ export default {
           };
 
           const [categories, posts, pages] = await Promise.all([
-            fetchAllItems("/wp-json/wp/v2/categories", "name"),
-            fetchAllItems("/wp-json/wp/v2/posts", "title"),
-            fetchAllItems("/wp-json/wp/v2/pages", "title"),
-            // fetchAllItems("/wp-json/wp/v2/categories", "name,description"),
-            // fetchAllItems("/wp-json/wp/v2/posts", "title,content"),
-            // fetchAllItems("/wp-json/wp/v2/pages", "title,content"),
+            fetchAllItems("/wp-json/wp/v2/categories", "name,description"),
+            fetchAllItems("/wp-json/wp/v2/posts", "title,content"),
+            fetchAllItems("/wp-json/wp/v2/pages", "title,content"),
           ]);
 
           categories.forEach(async (category) => {
@@ -200,9 +197,7 @@ export default {
             let title = post.title.rendered.replace("rendered:", "");
             let content = post.content.rendered
               .replace(/<[^>]*>?/gm, "")
-              .replace("rendered:", "")
-              .replace(/\t/g, "")
-              .replace(/\n/g, "");
+              .replace("rendered:", "");
             await addDoc(colRef, {
               title,
               content,
@@ -216,9 +211,7 @@ export default {
             let title = page.title.rendered.replace("rendered:", "");
             let content = page.content.rendered
               .replace(/<[^>]*>?/gm, "")
-              .replace("rendered:", "")
-              .replace(/\t/g, "")
-              .replace(/\n/g, "");
+              .replace("rendered:", "");
             await addDoc(colRef, {
               title,
               content,

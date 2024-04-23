@@ -1,17 +1,16 @@
 <template>
   <div style="margin: 0 auto" class="width62">
     <h1>Register WordPress Website</h1>
-    <div class="flexed" style="margin-bottom: 0%;">
-      <div>
-        <label for="wordpressUrl">WordPress URL:</label>
-        <input type="text" id="wordpressUrl" v-model="wordpressUrl" required />
-        <button @click="registerSite">Register</button>
-      </div>
-      <div style="margin-left: 5%; padding-top: 5%;">
-        <h2 v-if="posts.length || pages.length || categories.length">
-          ** Click on one of the items to generate content from it **
-        </h2>
-      </div>
+    <div class="flexed">
+        <div>
+            <label for="wordpressUrl">WordPress URL:</label>
+            <input type="text" id="wordpressUrl" v-model="wordpressUrl" required />
+            <button @click="registerSite">Register</button>
+        </div>
+        <div style="margin-left: 10%;">
+           <h1>
+
+            *Click on one of the items to generate content from it*</h1></div>
     </div>
 
     <div v-if="!posts.length && !pages.length && !categories.length">
@@ -88,9 +87,8 @@ export default {
   },
   methods: {
     sendItem(item) {
-        console.log(item);
       axios
-        .post("https://createwppost-ibnrirhwvq-uc.a.run.app", item)
+        .post("your_api_endpoint", item)
         .then((response) => {
           console.log(response);
           // Handle the response as needed
@@ -178,12 +176,9 @@ export default {
           };
 
           const [categories, posts, pages] = await Promise.all([
-            fetchAllItems("/wp-json/wp/v2/categories", "name"),
-            fetchAllItems("/wp-json/wp/v2/posts", "title"),
-            fetchAllItems("/wp-json/wp/v2/pages", "title"),
-            // fetchAllItems("/wp-json/wp/v2/categories", "name,description"),
-            // fetchAllItems("/wp-json/wp/v2/posts", "title,content"),
-            // fetchAllItems("/wp-json/wp/v2/pages", "title,content"),
+            fetchAllItems("/wp-json/wp/v2/categories", "name,description"),
+            fetchAllItems("/wp-json/wp/v2/posts", "title,content"),
+            fetchAllItems("/wp-json/wp/v2/pages", "title,content"),
           ]);
 
           categories.forEach(async (category) => {
@@ -200,9 +195,7 @@ export default {
             let title = post.title.rendered.replace("rendered:", "");
             let content = post.content.rendered
               .replace(/<[^>]*>?/gm, "")
-              .replace("rendered:", "")
-              .replace(/\t/g, "")
-              .replace(/\n/g, "");
+              .replace("rendered:", "");
             await addDoc(colRef, {
               title,
               content,
@@ -216,9 +209,7 @@ export default {
             let title = page.title.rendered.replace("rendered:", "");
             let content = page.content.rendered
               .replace(/<[^>]*>?/gm, "")
-              .replace("rendered:", "")
-              .replace(/\t/g, "")
-              .replace(/\n/g, "");
+              .replace("rendered:", "");
             await addDoc(colRef, {
               title,
               content,

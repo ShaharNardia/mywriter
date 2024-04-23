@@ -31,7 +31,7 @@ const openAI = async function (prompt, maxContentLength) {
   };
 
   const data = {
-    model: "gpt-4-0125-preview",
+    model: "gpt-3.5-turbo",
     messages: [
       {
         role: "user",
@@ -437,52 +437,6 @@ exports.createWpPost = onRequest(async (request, response) => {
   });
 });
 
-exports.createPostComment = onRequest(async (request, response) => {
-  cors(request, response, async () => {
-    console.log("Request body:", request.body);
-
-          var  openAIResponse=   await openAI(`This is a a post from facebook - ${request.body}. 
-          you are a politicak advaisor in south africa, write ma a suitable comment that will parsuade voting for your candidate.
-          the comment should be in english and writen with a friendly tone`,4096);
-  
-        let response = openAIResponse.choices[0].message.content.trim();
-        {
-          console.log("openAIResponse - ", response);
-  
-          await db
-            .collection("generatedContent")
-            .add({
-              title: postTitle,
-              created: admin.firestore.FieldValue.serverTimestamp(),
-              wordpress: true,
-              userToken: userToken,
-              content: response,
-              status: "success",
-            })
-            .then((ref) => {
-              console.log("Document written with ID: ", ref.id);
-            });
-  
-          await insertToNotificationsList(
-            userToken,
-            "New wordpress post created - " + titleOrigin
-          );
-          // postDraftToWordPress(
-          //   wordpressUrl,
-          //   token,
-          //   _title,
-          //   _content,
-          //   keywords,
-          //   userToken
-          // );
-        }
-      }
-    } catch (error) {
-      console.error("Error creating post:", error);
-  });
-});
-
-
 exports.getWordpresspostPageCategoryLists = functions.https.onRequest(
   async (request, response) => {
     cors(request, response, async () => {
@@ -776,50 +730,7 @@ async function generateWpPost(userToken, titleOrigin, contentOrigin, category) {
     throw new Error("Failed to generate post");
   }
 }
-exports.getNewIdeas = onRequest(async (request, response) => {
-  const userToken = request.query.userToken;
-  try {
-    const wpSitePostsRef = db.collection("WpSitePosts");
-    const querySnapshot = await wpSitePostsRef
-      .where("userToken", "==", userToken)
-      .where("checked", "==", false)
-      .get();
 
-    const newIdeas = [];
-    const promises = [];
-    querySnapshot.forEach((doc) => {
-      const { title, content } = doc.data();
-      const promise = openAI(title, content)
-        .then((result) => {
-          const { NewIdeas, language } = result;
-          newIdeas.push(...NewIdeas, language);
-          return doc.ref.update({ checked: true });
-        })
-        .catch((error) => {
-          console.error("Error calling OpenAI API:", error);
-          throw new Error("Failed to generate new ideas");
-        });
-      promises.push(promise);
-    });
-
-    await Promise.all(promises);
-
-    const contentGeneratingIdeasRef = db.collection("ContentGeneratingIdeas");
-    const date = new Date();
-    const ideaObjects = newIdeas.map((idea) => ({
-      idea,
-      checked: false,
-      date,
-    }));
-
-    await contentGeneratingIdeasRef.add({ ideas: ideaObjects });
-
-    response.json({ success: true, newIdeas });
-  } catch (error) {
-    console.error("Error fetching and generating new ideas:", error);
-    response.status(500).json({ success: false, error: error.message });
-  }
-});
 // async function postDraftToWordPress(
 //   url,
 //   adminToken,

@@ -178,12 +178,9 @@ export default {
           };
 
           const [categories, posts, pages] = await Promise.all([
-            fetchAllItems("/wp-json/wp/v2/categories", "name"),
-            fetchAllItems("/wp-json/wp/v2/posts", "title"),
-            fetchAllItems("/wp-json/wp/v2/pages", "title"),
-            // fetchAllItems("/wp-json/wp/v2/categories", "name,description"),
-            // fetchAllItems("/wp-json/wp/v2/posts", "title,content"),
-            // fetchAllItems("/wp-json/wp/v2/pages", "title,content"),
+            fetchAllItems("/wp-json/wp/v2/categories", "name,description"),
+            fetchAllItems("/wp-json/wp/v2/posts", "title,content"),
+            fetchAllItems("/wp-json/wp/v2/pages", "title,content"),
           ]);
 
           categories.forEach(async (category) => {

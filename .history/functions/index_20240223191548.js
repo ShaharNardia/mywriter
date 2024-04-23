@@ -24,14 +24,14 @@ seedCollections();
 //   response.send("Hello from Firebase!");
 // });
 
-const openAI = async function (prompt, maxContentLength) {
+const openAI = async function (prompt) {
   const headers = {
     "Content-Type": "application/json",
     Authorization: `Bearer ${openAiToken}`,
   };
 
   const data = {
-    model: "gpt-4-0125-preview",
+    model: "gpt-3.5-turbo",
     messages: [
       {
         role: "user",
@@ -39,8 +39,6 @@ const openAI = async function (prompt, maxContentLength) {
       },
     ],
     temperature: 0.1,
-    max_tokens: maxContentLength, // Add this line
-
   };
 
   try {
@@ -424,66 +422,19 @@ exports.registerWpUserSite = onRequest(async (request, response) => {
 exports.createWpPost = onRequest(async (request, response) => {
   cors(request, response, async () => {
     console.log("Request body:", request.body);
-    const { userToken, title, content, category } = request.body;
-    try {
-      await generateWpPost(userToken, title, content, category);
-      return response
-        .status(200)
-        .json({ message: "Post created successfully" });
-    } catch (error) {
-      console.error("Error creating post:", error);
-      return response.status(500).json({ error: "Failed to create post" });
-    }
-  });
+  const { userToken, title, content, category } = request.body;
+  try {
+    await generateWpPost(userToken, title, content, category);
+    return response.status(200).json({ message: "Post created successfully" });
+  } catch (error) {
+    console.error("Error creating post:", error);
+    return response.status(500).json({ error: "Failed to create post" });
+  }
 });
-
-exports.createPostComment = onRequest(async (request, response) => {
-  cors(request, response, async () => {
-    console.log("Request body:", request.body);
-
-          var  openAIResponse=   await openAI(`This is a a post from facebook - ${request.body}. 
-          you are a politicak advaisor in south africa, write ma a suitable comment that will parsuade voting for your candidate.
-          the comment should be in english and writen with a friendly tone`,4096);
-  
-        let response = openAIResponse.choices[0].message.content.trim();
-        {
-          console.log("openAIResponse - ", response);
-  
-          await db
-            .collection("generatedContent")
-            .add({
-              title: postTitle,
-              created: admin.firestore.FieldValue.serverTimestamp(),
-              wordpress: true,
-              userToken: userToken,
-              content: response,
-              status: "success",
-            })
-            .then((ref) => {
-              console.log("Document written with ID: ", ref.id);
-            });
-  
-          await insertToNotificationsList(
-            userToken,
-            "New wordpress post created - " + titleOrigin
-          );
-          // postDraftToWordPress(
-          //   wordpressUrl,
-          //   token,
-          //   _title,
-          //   _content,
-          //   keywords,
-          //   userToken
-          // );
-        }
-      }
-    } catch (error) {
-      console.error("Error creating post:", error);
-  });
 });
-
 
 exports.getWordpresspostPageCategoryLists = functions.https.onRequest(
+  
   async (request, response) => {
     cors(request, response, async () => {
       try {
@@ -635,10 +586,9 @@ async function insertToNotificationsList(userToken, title) {
   }
 }
 
-async function generateWpPost(userToken, titleOrigin, contentOrigin, category) {
+async function generateWpPost(userToken, title, content, category) {
   try {
-    console.log("Generating WordPress post, userToken:", userToken);
-    const userWpSiteRef = db.collection("WpUserSite");
+    const userWpSiteRef = db.collection("userWpSite");
     const userSnapshot = await userWpSiteRef
       .where("userToken", "==", userToken)
       .get();
@@ -647,7 +597,9 @@ async function generateWpPost(userToken, titleOrigin, contentOrigin, category) {
       throw new Error("User token not found in userWpSite collection");
     }
 
-    const userWpSitePostsRef = db.collection("WpSitePosts");
+    const { wordpressUrl, token } = userSnapshot.docs[0].data();
+
+    const userWpSitePostsRef = db.collection("userWpSitePosts");
 
     const postSnapshot = await userWpSitePostsRef
       .where("userToken", "==", userToken)
@@ -657,118 +609,97 @@ async function generateWpPost(userToken, titleOrigin, contentOrigin, category) {
       throw new Error("No posts or pages found for the given user token");
     }
     let generatedPost;
-    if (!titleOrigin && !contentOrigin) {
+    if (!title && !content) {
       const randomPost =
         postSnapshot.docs[Math.floor(Math.random() * postSnapshot.size)];
+      // const randomPage = pageSnapshot.docs[Math.floor(Math.random() * pageSnapshot.size)];
 
       const { title: postTitle, content: postContent } = randomPost.data();
+      // const { title: pageTitle, content: pageContent } = randomPage.data();
 
       const openAIResponse =
         await openAI(`generate me a post related to the category and main content of the following post: ${postTitle}: ${postContent}. The post should be informative, SEO-friendly, and engaging. If the original content had emojis, use them. The content should include bold keywords and headers/titles.
-    the response format should be json object including title, content, keywords`,4096);
+    the response format should be json object including title, content, keywords`);
 
-      let response = openAIResponse.choices[0].message.content.trim();
-      {
-        console.log("openAIResponse - ", response);
+      const { _title, content, keywords } =
+        openAIResponse.choices[0].message.content.trim();
 
-        await db
-          .collection("generatedContent")
-          .add({
-            title: postTitle,
-            created: admin.firestore.FieldValue.serverTimestamp(),
-            wordpress: true,
-            userToken: userToken,
-            content: response,
-            status: "success",
-          })
-          .then((ref) => {
-            console.log("Document written with ID: ", ref.id);
-          });
-
-        await insertToNotificationsList(
-          userToken,
-          "New wordpress post created - " + titleOrigin
-        );
-        // postDraftToWordPress(
-        //   wordpressUrl,
-        //   token,
-        //   _title,
-        //   _content,
-        //   keywords,
-        //   userToken
-        // );
-      }
-    } else if (!!titleOrigin || !!contentOrigin) {
+      generatedPost = {
+        _title,
+        content,
+        keywords,
+      };
+      await insertToNotificationsList(
+        userToken,
+        "New wordpress post created - " + _title
+      );
+      postDraftToWordPress(
+        wordpressUrl,
+        token,
+        _title,
+        content,
+        keywords,
+        postTitle,
+        userToken
+      );
+    } else if (!!title || !!content) {
       const openAIResponse =
-        await openAI(`generate me a post related to the category and main content of the following post: ${titleOrigin}: ${contentOrigin}. 
+        await openAI(`generate me a post related to the category and main content of the following post: ${title}: ${content}. 
                       The post should be informative, SEO-friendly, and engaging. If the original content had emojis, use them.  
                       The content should include bold keywords and headers/titles.
                       The language of the post should be same as the original.
-                      the response format should be json object including title, content, keywords`,4096);
-      console.log("openAIResponse - ", openAIResponse.choices[0].message);
-      let response = openAIResponse.choices[0].message.content.trim();{
-       
-      await db
-        .collection("generatedContent")
-        .add({
-          title: titleOrigin,
-          created: admin.firestore.FieldValue.serverTimestamp(),
-          wordpress: true,
-          userToken: userToken,
-          content: response,
-          status: "success",
-        })
-        .then((ref) => {
-          console.log("Document written with ID: ", ref.id);
-        });
+                      the response format should be json object including title, content, keywords`);
 
+      const { _title, content, keywords } =
+        openAIResponse.choices[0].message.content.trim();
+
+      generatedPost = {
+        title: _title,
+        content,
+        keywords,
+      };
       await insertToNotificationsList(
         userToken,
-        "New wordpress post created - " + titleOrigin
+        "New wordpress post created - " + title
       );
-      // postDraftToWordPress(
-      //   wordpressUrl,
-      //   token,
-      //   _title,
-      //   _content,
-      //   keywords,
-      //   userToken
-      // );}
-    }} else {
+      postDraftToWordPress(
+        wordpressUrl,
+        token,
+        _title,
+        content,
+        keywords,
+        title,
+        userToken
+      );
+    } else {
       const openAIResponse =
         await openAI(`generate me a post related to the category and main content of the following category: ${category}. 
                       The post should be informative, SEO-friendly, and engaging. If the original content had emojis, use them.  
                       The content should include bold keywords and headers/titles.
                       The language of the post should be same as the original.
-                      the response format should be json object including title, content, keywords`,4096);
-      console.log("openAIResponse - ", openAIResponse.choices[0].message);
-      let response = openAIResponse.choices[0].message.content.trim();
+                      the response format should be json object including title, content, keywords`);
 
-      await db
-        .collection("generatedContent")
-        .add({
-          title: 'New post from category - ' + category,
-          created: admin.firestore.FieldValue.serverTimestamp(),
-          wordpress: true,
-          userToken: userToken,
-          content: response,
-          status: "success",
-        })
-        .then((ref) => {
-          console.log("Document written with ID: ", ref.id);
-        });
+      const { title, content, keywords } =
+        openAIResponse.choices[0].message.content.trim();
+
+      generatedPost = {
+        title,
+        content,
+        keywords,
+      };
       await insertToNotificationsList(
         userToken,
-        "New wordpress post created - from category-" + category
+        "New wordpress post created - " + title
       );
-      // postDraftToWordPress(
-      //   wordpressUrl,
-      //   token,
-      //   title,
-      //   content,
-      //   keywords,
-      //   userToken
-      // );
+      postDraftToWordPress(
+        wordpressUrl,
+        token,
+        title,
+        content,
+        keywords,
+        `Category: ${category}`,
+        userToken
+      );
     }
     return generatedPost;
   } catch (error) {
@@ -776,92 +707,61 @@ async function generateWpPost(userToken, titleOrigin, contentOrigin, category) {
     throw new Error("Failed to generate post");
   }
 }
-exports.getNewIdeas = onRequest(async (request, response) => {
-  const userToken = request.query.userToken;
-  try {
-    const wpSitePostsRef = db.collection("WpSitePosts");
-    const querySnapshot = await wpSitePostsRef
-      .where("userToken", "==", userToken)
-      .where("checked", "==", false)
-      .get();
 
-    const newIdeas = [];
-    const promises = [];
-    querySnapshot.forEach((doc) => {
-      const { title, content } = doc.data();
-      const promise = openAI(title, content)
-        .then((result) => {
-          const { NewIdeas, language } = result;
-          newIdeas.push(...NewIdeas, language);
-          return doc.ref.update({ checked: true });
-        })
-        .catch((error) => {
-          console.error("Error calling OpenAI API:", error);
-          throw new Error("Failed to generate new ideas");
-        });
-      promises.push(promise);
+async function postDraftToWordPress(
+  url,
+  adminToken,
+  title,
+  content,
+  keywords,
+  fromTitle,
+  userToken
+) {
+  try {
+    const generatedForWPRef = db.collection("generatedContent").doc();
+    await generatedForWPRef.set({
+      wordpress: true,
+      url,
+      adminToken,
+      title,
+      content,
+      keywords,
+      fromTitle,
     });
 
-    await Promise.all(promises);
+    const response = await axios.post(
+      `${url}/wp-json/wp/v2/posts`,
+      {
+        title: title,
+        content: content,
+        status: "draft",
+        meta: {
+          keywords: keywords,
+        },
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${adminToken}`,
+        },
+      }
+    );
 
-    const contentGeneratingIdeasRef = db.collection("ContentGeneratingIdeas");
-    const date = new Date();
-    const ideaObjects = newIdeas.map((idea) => ({
-      idea,
-      checked: false,
-      date,
-    }));
+    if (response.status === 201) {
+      console.log("Post draft created successfully");
+      await insertToNotificationsList(
+        userToken,
+        "New wordpress post draft created - " + title
+      );
+    } else {
+      await insertToNotificationsList(userToken, "Failed to create post draft");
 
-    await contentGeneratingIdeasRef.add({ ideas: ideaObjects });
-
-    response.json({ success: true, newIdeas });
+      console.log("Failed to create post draft");
+    }
   } catch (error) {
-    console.error("Error fetching and generating new ideas:", error);
-    response.status(500).json({ success: false, error: error.message });
+    console.error("Error posting draft to WordPress:", error);
+    throw new Error("Failed to post draft to WordPress");
   }
-});
-// async function postDraftToWordPress(
-//   url,
-//   adminToken,
-//   title,
-//   content,
-//   keywords,
-//   userToken
-// ) {
-//   try {
-//     const response = await axios.post(
-//       `${url}/wp-json/wp/v2/posts`,
-//       {
-//         title: title,
-//         content: content,
-//         status: "draft",
-//         meta: {
-//           keywords: keywords,
-//         },
-//       },
-//       {
-//         headers: {
-//           Authorization: `Bearer ${adminToken}`,
-//         },
-//       }
-//     );
-
-//     if (response.status === 201) {
-//       console.log("Post draft created successfully");
-//       await insertToNotificationsList(
-//         userToken,
-//         "New wordpress post draft created - " + title
-//       );
-//     } else {
-//       await insertToNotificationsList(userToken, "Failed to create post draft");
-
-//       console.log("Failed to create post draft");
-//     }
-//   } catch (error) {
-//     console.error("Error posting draft to WordPress:", error);
-//     throw new Error("Failed to post draft to WordPress");
-//   }
-// }
+}
 
 exports.scheduledJob = functions.pubsub
   .schedule("every 8 hours")
