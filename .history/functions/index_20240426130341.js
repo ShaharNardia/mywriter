@@ -233,7 +233,9 @@ const getPurpose = (purpose) => {
 };
 const generatePrompt = (promptParams) => {
   const { title, purpose, useEmojis, language, tone, goal } = promptParams;
-  return `Generate a content for ${title}, keep in mind that the goal of this content is - ${goal} and that ${getPurpose(purpose)}, ${useEmoji(
+  return `Generate a content for ${title}, keep in mind that the goal of this content is - ${goal} and that ${getPurpose(
+    purpose
+  )}, ${useEmoji(
     useEmojis
   )} the content should be in language - ${language}. The tone of the content should be ${tone}.`;
 };

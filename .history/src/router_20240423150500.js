@@ -9,6 +9,7 @@ import Contents from "./views/ContentsHistory.vue";
 import ContentPage from "./views/ContentPage.vue";
 import HomePage from "./views/HomePage.vue";
 import setUp from "./views/SetUp.vue";
+import registerWP from "./views/MyWP.vue";
 import MyWP from "./views/MyWP.vue";
 import FetchWP from "./views/FetchWP.vue";
 

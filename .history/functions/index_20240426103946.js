@@ -136,18 +136,17 @@ exports.getWPHooksByBaseDomain = functions.https.onRequest(async (req, res) => {
     try {
       const base_domain = req.query.domain;
       const token = req.query.token;
-      if (token === "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") {
-      // Fetch the data from wp-hooks using the base_domain and token
-      const data = await fetchWPHooksByBaseDomain(base_domain);
-      // Send the response
-      res.status(200).json(data);
-      }
-      else {
+      if (token != "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") {
         return res.status(403).send("Invalid token.");
       }
+      // Fetch the data from wp-hooks using the base_domain and token
+      const data = await fetchWPHooksByBaseDomain(base_domain);
+
+      // Send the response
+      res.status(200).json(data);
     } catch (error) {
       console.error("Error fetching WPHooks:", error);
-      res.status(500).json({ error: "Failed to fetch WPHooks1" });
+      res.status(500).json({ error: "Failed to fetch WPHooks" });
     }
   });
 });
@@ -165,7 +164,7 @@ async function fetchWPHooksByBaseDomain(base_domain) {
     return hooks;
   } catch (error) {
     console.error("Error fetching WP hooks:", error);
-    throw new Error("Failed to fetch WP hooks2");
+    throw new Error("Failed to fetch WP hooks");
   }
 }
 
@@ -233,7 +232,9 @@ const getPurpose = (purpose) => {
 };
 const generatePrompt = (promptParams) => {
   const { title, purpose, useEmojis, language, tone, goal } = promptParams;
-  return `Generate a content for ${title}, keep in mind that the goal of this content is - ${goal} and that ${getPurpose(purpose)}, ${useEmoji(
+  return `Generate a content for ${title}, keep in mind that the goal of this content is - ${goal} and that ${getPurpose(
+    purpose
+  )}, ${useEmoji(
     useEmojis
   )} the content should be in language - ${language}. The tone of the content should be ${tone}.`;
 };
