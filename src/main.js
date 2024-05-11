@@ -1,43 +1,20 @@
-import { initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
-
-import { getFirestore } from "firebase/firestore";
-import Toast from 'vue-toastification';
-import 'vue-toastification/dist/index.css';
-
-
-import "firebase/auth";
 import { createApp } from "vue";
 import App from "./App.vue";
+import router from "./router";
+import { createStore } from "vuex";
+import { library } from '@fortawesome/fontawesome-svg-core';
+import { fas } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import Toast from 'vue-toastification';
+import 'vue-toastification/dist/index.css';
 import VueTelInput from 'vue-tel-input';
 import '../node_modules/vue-tel-input/dist/vue-tel-input.css';
 
-import router from "./router.js"; // Import the router.js file
-import { createStore } from "vuex";
-import { library } from '@fortawesome/fontawesome-svg-core'
-import { fas } from '@fortawesome/free-solid-svg-icons'
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+import { initializeApp } from "firebase/app";
+import { getAuth } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
 
-library.add(fas)
-
-
-const store = createStore({
-  state: {
-    language: "english", // default value
-    isLoggedIn: false,
-    // other state properties...
-  },
-  mutations: {
-    setLanguage(state, newLanguage) {
-      state.language = newLanguage;
-    },
-    setIsLoggedIn(state, newLogIn) {
-      state.isLoggedIn = newLogIn;
-    },
-    // other mutations...
-  },
-  // mutations, actions, getters...
-});
+library.add(fas);
 
 const firebaseConfig = {
   apiKey: "AIzaSyCPu4kGkhCryutV_o9Z2X_fUz6hVrfYd9E",
@@ -49,17 +26,31 @@ const firebaseConfig = {
   measurementId: "G-TL7RTHBMZ7",
 };
 
-const app = createApp(App);
+const firebaseApp = initializeApp(firebaseConfig);
+const db = getFirestore(firebaseApp);
+const auth = getAuth(firebaseApp);
 
-app.component('font-awesome-icon', FontAwesomeIcon)
+const store = createStore({
+  state: {
+    language: "english",
+    isLoggedIn: false,
+  },
+  mutations: {
+    setLanguage(state, newLanguage) {
+      state.language = newLanguage;
+    },
+    setIsLoggedIn(state, newLogIn) {
+      state.isLoggedIn = newLogIn;
+    },
+  },
+});
+
+const app = createApp(App);
+app.component('font-awesome-icon', FontAwesomeIcon);
 app.use(VueTelInput);
 app.use(Toast);
 app.use(store);
-app.use(router); // Use the router plugin
-app.mount("#app"); // Mount the app to the DOM
+app.use(router);
+app.mount("#app");
 
-const firebaseApp = initializeApp(firebaseConfig);
-const db = getFirestore(firebaseApp);
-
-const auth = getAuth(app);
-export { firebaseApp, db, auth};
+export { firebaseApp, db, auth };

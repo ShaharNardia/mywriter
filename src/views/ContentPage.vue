@@ -4,9 +4,14 @@
     <div
       class="width62"
       v-else
-      :class="document.language === 'hebrew' ? 'rtl' : 'ltr'"
+      :class="document.language === 'english' ? 'ltr' : 'rtl'"
     >
-      <div v-if="document.type == 'blog'">
+      <div
+        v-if="
+          document.type == 'blog' ||
+          document.type == 'Web Content (-HTML Format)'
+        "
+      >
         <div class="flexed" style="margin-bottom: 5%">
           <div
             @click="raw(true)"
@@ -31,7 +36,12 @@
           <div>{{ document.content }}</div>
         </div>
       </div>
-      <div v-else-if="document.type == 'API Response (-JSON Format)'">
+      <div
+        v-else-if="
+          document.type == 'API Response (-JSON Format)' ||
+          document.type == null
+        "
+      >
         <h1>{{ document.title }}</h1>
         <div class="flexed" style="margin-bottom: 5%">
           <div
@@ -95,7 +105,16 @@ export default {
           },
         })
         .then((response) => {
+          response.data.content = response.data.content
+            .replace(/json/g, "") // Global replace 'json'
+            .replace(/```/g, "") // Global replace all occurrences of "```"
+            .replace(/\\n/g, " ") // Replace all escaped new lines with a space
+            .replace(/\\n/g, "") // Removing escaped newlines if not necessary
+            .replace(/\n/g, " ") // Replace actual newlines with space
+            .replace(/\r/g, " "); // Replace carriage returns if present
+
           this.document = response.data;
+          console.log(this.document.content);
           return response.data;
         })
         .catch((error) => {

@@ -1,37 +1,9 @@
-<template>
-  <div class="login-container">
-    <h1>Login</h1>
-    <div class="login-form">
-      <!-- <div class="form-group">
-                <label for="email">Email</label>
-                <input type="email" id="email" v-model="email" placeholder="Enter your email" />
-            </div>
-            <div class="form-group">
-                <label for="password">Password</label>
-                <input type="password" id="password" v-model="password" placeholder="Enter your password" />
-            </div> -->
-      <!-- <button @click="loginWithEmailPassword">Login with Email/Password</button> -->
-      <button @click="loginWithGmail">Login with Gmail</button>
-      <!-- <button @click="loginWithPhone">Login with Phone</button> -->
-    </div>
-  </div>
-  <div v-if="showModal" class="modal">
-    <div class="modal-content">
-      <span class="close" @click="closeModal">&times;</span>
-      <p>{{ modalMessage }}</p>
-    </div>
-  </div>
-</template>
-
 <script>
-// Import the necessary Firebase modules using the new modular syntax
-import {
-  getAuth,
-  signInWithEmailAndPassword,
-  GoogleAuthProvider,
-  signInWithPopup,
-  PhoneAuthProvider,
-} from "firebase/auth";
+import { auth } from "firebase/auth";
+import { signInWithPopup } from "firebase/auth";
+import { GoogleAuthProvider } from "firebase/auth";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { PhoneAuthProvider } from "firebase/auth";
 import axios from "axios";
 
 export default {
@@ -60,80 +32,39 @@ export default {
         .catch((error) => {
           console.error(error);
         });
-      // if (userId) {
-      //   this.$router.push("/set-up");
-      // } else {
-      //   let user = "querySnapshot.docs[0].data()";
-      //   this.$store.commit("setIsLoggedIn", true);
-      //   localStorage.setItem("user", JSON.stringify(user));
-      //   this.$router.push("/home-page");
-      // }
     },
     loginWithEmailPassword() {
-      const auth = getAuth();
       signInWithEmailAndPassword(auth, this.email, this.password)
         .then(() => {
-          // this.redirect(auth);
+          // Continue as necessary, probably redirecting or updating UI
         })
         .catch((error) => {
-          // Handle login error
           this.showModal = true;
           this.modalMessage = error.message;
           console.error(error);
         });
     },
     loginWithGmail() {
-      const auth = getAuth();
       const provider = new GoogleAuthProvider();
       signInWithPopup(auth, provider)
         .then((userCredential) => {
-          // Login successful
           const user = userCredential.user;
-          localStorage.setItem("userToken", user.uid); // Store user UID in local storage
-
-          axios
-            .get("https://getformsettings-ibnrirhwvq-uc.a.run.app/")
-            .then((res) => {
-              localStorage.setItem(
-                "goalsList",
-                JSON.stringify(res.data.goalsList)
-              );
-              localStorage.setItem(
-                "tonesList",
-                JSON.stringify(res.data.tonesList)
-              );
-              localStorage.setItem(
-                "platformsList",
-                JSON.stringify(res.data.platformsList)
-              );
-              localStorage.setItem(
-                "jobTypesList",
-                JSON.stringify(res.data.jobTypesList)
-              );
-            });
-
+          localStorage.setItem("userToken", user.uid);
           this.redirect(user.uid);
         })
         .catch((error) => {
-          // Handle login error
           this.showModal = true;
           this.modalMessage = error.message;
           console.error(error);
         });
     },
     loginWithPhone() {
-      const auth = getAuth();
       const provider = new PhoneAuthProvider(auth);
-      // Note: signInWithPopup might not be the correct method for phone auth,
-      // you might need to use signInWithPhoneNumber instead, depending on your setup.
-      // This example uses signInWithPopup as a placeholder.
       signInWithPopup(auth, provider)
         .then(() => {
-          // Login successful
-          //this.redirect(auth);
+          // Handle login success
         })
         .catch((error) => {
-          // Handle login error
           this.showModal = true;
           this.modalMessage = error.message;
           console.error(error);
@@ -143,96 +74,29 @@ export default {
       this.showModal = false;
       this.modalMessage = "";
     },
+    handleStorageChange(event) {
+      if (event.key === 'userToken' && !event.newValue) {
+        this.$router.push('/login');
+      }
+    },
   },
-  mounted() {},
-  beforeCreate() {
-    // Check if user is already logged in
-    localStorage.clear();
+  mounted() {
+    const userToken = localStorage.getItem("userToken");
+    if (userToken) {
+      auth.onAuthStateChanged((user) => {
+        if (user && user.uid === userToken) {
+          this.redirect(user.uid);
+        } else {
+          localStorage.removeItem("userToken");
+          this.$router.push("/login");
+        }
+      });
+    } else {
+      this.$router.push("/login");
+    }
+  },
+  created() {
+    window.addEventListener("storage", this.handleStorageChange);
   },
 };
 </script>
-
-<style scoped>
-.login-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 50vh;
-}
-
-.login-form {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 20px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-}
-
-.form-group {
-  margin-bottom: 10px;
-}
-
-label {
-  font-weight: bold;
-}
-
-input {
-  width: 100%;
-  padding: 5px;
-  border: 1px solid #ccc;
-  border-radius: 3px;
-}
-
-button {
-  margin-top: 10px;
-  padding: 10px 20px;
-  background-color: #007bff;
-  color: #fff;
-  border: none;
-  border-radius: 3px;
-  cursor: pointer;
-}
-
-button:hover {
-  background-color: #0056b3;
-}
-
-.modal {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: fixed;
-  z-index: 1;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.4);
-}
-
-.modal-content {
-  background-color: #fefefe;
-  margin: auto;
-  padding: 20px;
-  border: 1px solid #888;
-  width: 300px;
-  border-radius: 5px;
-}
-
-.close {
-  color: #aaa;
-  float: right;
-  font-size: 28px;
-  font-weight: bold;
-  cursor: pointer;
-}
-
-.close:hover,
-.close:focus {
-  color: black;
-  text-decoration: none;
-  cursor: pointer;
-}
-</style>
