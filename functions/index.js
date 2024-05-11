@@ -555,15 +555,15 @@ exports.registerWpUserSite = onRequest(async (request, response) => {
       throw new Error("User token not found in users collection");
     }
 
-    // Create a new document in userWpSite collection
-    const userWpSiteRef = db.collection("userWpSite").doc();
-    await userWpSiteRef.set({
+    // Create a new document in WpUserSite collection
+    const WpUserSiteRef = db.collection("WpUserSite").doc();
+    await WpUserSiteRef.set({
       userToken,
       wordpressUrl,
       token,
       created: admin.firestore.FieldValue.serverTimestamp(),
     });
-    await fetchWordPressData(userToken, wordpressUrl);
+    //await fetchWordPressData(userToken, wordpressUrl);
     response.status(200).json({ message: "User site registered successfully" });
   } catch (error) {
     console.error("Error registering user site:", error);
@@ -677,98 +677,98 @@ exports.getWordpresspostPageCategoryLists = functions.https.onRequest(
   }
 );
 
-async function fetchWordPressData(userToken, url) {
-  try {
-    // Function to fetch all items from a WordPress API endpoint
-    const fetchAllItems = async (endpoint, fields) => {
-      let items = [];
-      let page = 1;
-      let run = true;
-      while (run) {
-        const res = await axios.get(
-          `${url}${endpoint}?per_page=100&page=${page}&_fields=${fields}`
-        );
-        items = items.concat(res.data);
+// async function fetchWordPressData(userToken, url) {
+//   try {
+//     // Function to fetch all items from a WordPress API endpoint
+//     const fetchAllItems = async (endpoint, fields) => {
+//       let items = [];
+//       let page = 1;
+//       let run = true;
+//       while (run) {
+//         const res = await axios.get(
+//           `${url}${endpoint}?per_page=100&page=${page}&_fields=${fields}`
+//         );
+//         items = items.concat(res.data);
 
-        // If less than the maximum number of items are returned, we've reached the last page
-        if (res.data.length < 100) {
-          run = false;
-          break;
-        }
+//         // If less than the maximum number of items are returned, we've reached the last page
+//         if (res.data.length < 100) {
+//           run = false;
+//           break;
+//         }
 
-        page++;
-      }
+//         page++;
+//       }
 
-      return items;
-    };
+//       return items;
+//     };
 
-    // Fetch categories, posts, and pages from the WordPress API
-    const [categories, posts, pages] = await Promise.all([
-      fetchAllItems("/wp-json/wp/v2/categories", "name,description"),
-      fetchAllItems("/wp-json/wp/v2/posts", "title,content"),
-      fetchAllItems("/wp-json/wp/v2/pages", "title,content"),
-      // fetchAllItems("/wp-json/wc/v3/products", "*"),
-    ]);
+//     // Fetch categories, posts, and pages from the WordPress API
+//     const [categories, posts, pages] = await Promise.all([
+//       fetchAllItems("/wp-json/wp/v2/categories", "name,description"),
+//       fetchAllItems("/wp-json/wp/v2/posts", "title,content"),
+//       fetchAllItems("/wp-json/wp/v2/pages", "title,content"),
+//       // fetchAllItems("/wp-json/wc/v3/products", "*"),
+//     ]);
 
-    // Insert the fetched data into Firestore collections
-    const batch = db.batch();
+//     // Insert the fetched data into Firestore collections
+//     const batch = db.batch();
 
-    categories.data.forEach((category) => {
-      const docRef = db.collection("userWpSiteCategories").doc();
-      batch.set(docRef, { ...category, userToken, url });
-    });
-    await insertToNotificationsList(
-      userToken,
-      "WordPress category data fetched successfully"
-    );
+//     categories.data.forEach((category) => {
+//       const docRef = db.collection("WpUserSiteCategories").doc();
+//       batch.set(docRef, { ...category, userToken, url });
+//     });
+//     await insertToNotificationsList(
+//       userToken,
+//       "WordPress category data fetched successfully"
+//     );
 
-    posts.data.forEach((post) => {
-      const docRef = db.collection("userWpSitePosts").doc();
-      let title = { title: post.title.rendered.replace("rendered:", "") };
-      let content = {
-        content: post.content.rendered
-          .replace(/<[^>]*>?/gm, "")
-          .replace("rendered:", ""),
-      };
-      batch.set(docRef, { title, content, userToken, url });
-    });
-    await insertToNotificationsList(
-      userToken,
-      "WordPress posts data fetched successfully"
-    );
+//     posts.data.forEach((post) => {
+//       const docRef = db.collection("WpUserSitePosts").doc();
+//       let title = { title: post.title.rendered.replace("rendered:", "") };
+//       let content = {
+//         content: post.content.rendered
+//           .replace(/<[^>]*>?/gm, "")
+//           .replace("rendered:", ""),
+//       };
+//       batch.set(docRef, { title, content, userToken, url });
+//     });
+//     await insertToNotificationsList(
+//       userToken,
+//       "WordPress posts data fetched successfully"
+//     );
 
-    pages.data.forEach((page) => {
-      const docRef = db.collection("userWpSitePages").doc();
-      let title = { title: page.title.rendered.replace("rendered:", "") };
-      let content = {
-        content: page.content.rendered
-          .replace(/<[^>]*>?/gm, "")
-          .replace("rendered:", ""),
-      };
-      batch.set(docRef, { title, content, userToken, url });
-    });
-    await insertToNotificationsList(
-      userToken,
-      "WordPress pages data fetched successfully"
-    );
+//     pages.data.forEach((page) => {
+//       const docRef = db.collection("WpUserSitePages").doc();
+//       let title = { title: page.title.rendered.replace("rendered:", "") };
+//       let content = {
+//         content: page.content.rendered
+//           .replace(/<[^>]*>?/gm, "")
+//           .replace("rendered:", ""),
+//       };
+//       batch.set(docRef, { title, content, userToken, url });
+//     });
+//     await insertToNotificationsList(
+//       userToken,
+//       "WordPress pages data fetched successfully"
+//     );
 
-    // products.data.forEach((product) => {
-    //   const docRef = db.collection("userWpSiteProducts").doc();
-    //   batch.set(docRef, { ...product, userToken, url });
-    // });
-    await batch.commit();
-    // await insertToNotificationsList(
-    //   userToken,
-    //   "WordPress products data fetched successfully"
-    // );
-  } catch (err) {
-    console.error(err); // This will log the error details to the console
-    await insertToNotificationsList(
-      userToken,
-      `Failed to fetch WordPress data {err}`
-    );
-  }
-}
+//     // products.data.forEach((product) => {
+//     //   const docRef = db.collection("WpUserSiteProducts").doc();
+//     //   batch.set(docRef, { ...product, userToken, url });
+//     // });
+//     await batch.commit();
+//     // await insertToNotificationsList(
+//     //   userToken,
+//     //   "WordPress products data fetched successfully"
+//     // );
+//   } catch (err) {
+//     console.error(err); // This will log the error details to the console
+//     await insertToNotificationsList(
+//       userToken,
+//       `Failed to fetch WordPress data {err}`
+//     );
+//   }
+// }
 
 async function insertToNotificationsList(userToken, title) {
   try {
@@ -787,18 +787,18 @@ async function insertToNotificationsList(userToken, title) {
 async function generateWpPost(userToken, titleOrigin, contentOrigin, category) {
   try {
     console.log("Generating WordPress post, userToken:", userToken);
-    const userWpSiteRef = db.collection("WpUserSite");
-    const userSnapshot = await userWpSiteRef
+    const WpUserSiteRef = db.collection("WpUserSite");
+    const userSnapshot = await WpUserSiteRef
       .where("userToken", "==", userToken)
       .get();
 
     if (userSnapshot.empty) {
-      throw new Error("User token not found in userWpSite collection");
+      throw new Error("User token not found in WpUserSite collection");
     }
 
-    const userWpSitePostsRef = db.collection("WpSitePosts");
+    const WpUserSitePostsRef = db.collection("WpSitePosts");
 
-    const postSnapshot = await userWpSitePostsRef
+    const postSnapshot = await WpUserSitePostsRef
       .where("userToken", "==", userToken)
       .get();
 

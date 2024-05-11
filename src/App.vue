@@ -51,6 +51,31 @@ onUnmounted(() => {
 </style>
 
 <style>
+.link-container {
+}
+
+.styled-link {
+  padding: 10px 15px; /* Padding around the text */
+  background-color: #007bff; /* A pleasant blue background */
+  color: white; /* White text color */
+  text-decoration: none; /* No underline */
+  border-radius: 5px; /* Rounded corners */
+  border: none; /* No border */
+  transition: background-color 0.3s, transform 0.3s; /* Smooth transition for background and transform */
+  display: inline-block; /* Necessary for padding and margins to work on link */
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* Subtle shadow */
+}
+
+.styled-link:hover,
+.styled-link:focus {
+  background-color: #0056b3; /* Darker blue when hovered/focused */
+  transform: translateY(-2px); /* Slight raise effect */
+  outline: none; /* Removes the outline to avoid distraction */
+}
+
+.styled-link:active {
+  transform: translateY(1px); /* Slight push effect when clicked */
+}
 .flexed {
   display: flex;
   /* justify-content: space-between; */
