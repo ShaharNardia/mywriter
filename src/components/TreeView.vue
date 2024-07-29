@@ -4,7 +4,7 @@
       <div><strong>Title:</strong> {{ data.title }}</div>
     </div>
     <div class="node">
-      <div><strong>Content:</strong> {{ data.content }}</div>
+      <div><strong>Content:</strong> <div v-html="data.content "></div></div>
     </div>
     <div class="node">
       <div><strong>Preview Content:</strong> {{ data.previewContent }}</div>

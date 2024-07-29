@@ -11,6 +11,8 @@ import HomePage from "./views/HomePage.vue";
 import setUp from "./views/SetUp.vue";
 import MyWP from "./views/MyWP.vue";
 import FetchWP from "./views/FetchWP.vue";
+import PhoneBot from "./views/PhoneBot.vue";
+import WhatsappGroupCreator from "./views/WhatsappGroupCreator.vue";
 
 // Define routes
 const routes = [
@@ -23,6 +25,11 @@ const routes = [
     path: "/",
     name: "home-page",
     component: HomePage,
+  },
+  {
+    path: "/phone-bot",
+    name: "phone-bot",
+    component: PhoneBot,
   },
   {
     path: "/set-up",
@@ -55,6 +62,12 @@ const routes = [
     path: "/purchase-credits",
     name: "purchase-credits",
     component: PurchaseCredits,
+    meta: { requiresAuth: true }, // Add meta field to indicate authentication requirement
+  },
+  {
+    path: "/whatsappgroup-creator",
+    name: "whatsappgroup-creator",
+    component: WhatsappGroupCreator,
     meta: { requiresAuth: true }, // Add meta field to indicate authentication requirement
   },
   {

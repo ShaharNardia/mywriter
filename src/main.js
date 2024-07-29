@@ -5,14 +5,10 @@ import { createStore } from "vuex";
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { fas } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import Toast from 'vue-toastification';
-import 'vue-toastification/dist/index.css';
-import VueTelInput from 'vue-tel-input';
-import '../node_modules/vue-tel-input/dist/vue-tel-input.css';
 
 import { initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
+import { getAuth } from "firebase/auth";
 
 library.add(fas);
 
@@ -27,7 +23,7 @@ const firebaseConfig = {
 };
 
 const firebaseApp = initializeApp(firebaseConfig);
-const db = getFirestore(firebaseApp);
+const db = getFirestore(firebaseApp); // Initialize Firestore
 const auth = getAuth(firebaseApp);
 
 const store = createStore({
@@ -47,8 +43,6 @@ const store = createStore({
 
 const app = createApp(App);
 app.component('font-awesome-icon', FontAwesomeIcon);
-app.use(VueTelInput);
-app.use(Toast);
 app.use(store);
 app.use(router);
 app.mount("#app");

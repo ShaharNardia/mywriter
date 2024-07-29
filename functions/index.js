@@ -94,7 +94,7 @@ async function getWpCredentials(token, siteUrl) {
 
 exports.scheduledFetchPosts = functions.pubsub
   .schedule("every 5 minutes")
-  .onRun(async (context) => {
+  .onRun(async () => {
     const token = "specific-token"; // Normally, you would fetch or define these dynamically or securely
     const siteUrl = "https://example.com";
     try {
@@ -1396,6 +1396,154 @@ exports.sendEmail = onRequest(async (request, response) => {
       response.status(200).json({ message: "Email sent successfully" });
     } catch (err) {
       response.status(500).json({ error: `Failed to send email ${err}` });
+    }
+  });
+});
+
+exports.addGreenApiSettings = functions.https.onRequest(async (req, res) => {
+  cors(req, res, async () => {
+    try {
+      const { host, idInstance, apiTokenInstance, userToken, active } = req.body;
+
+      await db.collection("GreenApiSettings").doc(userToken).set({
+        host,
+        idInstance,
+        apiTokenInstance,
+        userToken,
+        active,
+        created: admin.firestore.FieldValue.serverTimestamp(),
+      });
+
+      res.status(200).json({ message: "Green API settings added successfully" });
+    } catch (error) {
+      console.error("Error adding Green API settings:", error);
+      res.status(500).json({ error: "Failed to add Green API settings" });
+    }
+  });
+});
+
+async function buildGreenApiUrl(userToken, endpoint) {
+  try {
+    const doc = await db.collection("GreenApiSettings").doc(userToken).get();
+    if (!doc.exists) {
+      throw new Error("No settings found for the provided user token.");
+    }
+    const settings = doc.data();
+    const { host, idInstance, apiTokenInstance } = settings;
+    return `${host}/waInstance${idInstance}/${endpoint}/${apiTokenInstance}`;
+  } catch (error) {
+    console.error("Error building Green API URL:", error);
+    throw error;
+  }
+}
+
+exports.createGroup = functions.https.onRequest(async (req, res) => {
+  cors(req, res, async () => {
+    try {
+      const { userToken, groupName, chatIds } = req.body;
+      const url = await buildGreenApiUrl(userToken, "createGroup");
+
+      const response = await axios.post(url, { groupName, chatIds }, { headers: { 'Content-Type': 'application/json' } });
+      res.status(200).json(response.data);
+    } catch (error) {
+      console.error("Error creating group:", error);
+      res.status(500).json({ error: "Failed to create group" });
+    }
+  });
+});
+
+exports.setGroupAdmin = functions.https.onRequest(async (req, res) => {
+  cors(req, res, async () => {
+    try {
+      const { userToken, groupId, participantChatId } = req.body;
+      const url = await buildGreenApiUrl(userToken, "setGroupAdmin");
+
+      const response = await axios.post(url, { groupId, participantChatId }, { headers: { 'Content-Type': 'application/json' } });
+      res.status(200).json(response.data);
+    } catch (error) {
+      console.error("Error setting group admin:", error);
+      res.status(500).json({ error: "Failed to set group admin" });
+    }
+  });
+});
+
+exports.updateGroupName = functions.https.onRequest(async (req, res) => {
+  cors(req, res, async () => {
+    try {
+      const { userToken, groupId, groupName } = req.body;
+      const url = await buildGreenApiUrl(userToken, "updateGroupName");
+
+      const response = await axios.post(url, { groupId, groupName }, { headers: { 'Content-Type': 'application/json' } });
+      res.status(200).json(response.data);
+    } catch (error) {
+      console.error("Error updating group name:", error);
+      res.status(500).json({ error: "Failed to update group name" });
+    }
+  });
+});
+
+
+exports.addGroupParticipant = functions.https.onRequest(async (req, res) => {
+  cors(req, res, async () => {
+    try {
+      const { userToken, groupId, participantChatId } = req.body;
+      const url = await buildGreenApiUrl(userToken, "addGroupParticipant");
+
+      const response = await axios.post(url, { groupId, participantChatId }, { headers: { 'Content-Type': 'application/json' } });
+      res.status(200).json(response.data);
+    } catch (error) {
+      console.error("Error adding group participant:", error);
+      res.status(500).json({ error: "Failed to add group participant" });
+    }
+  });
+});
+
+exports.setGroupPicture = functions.https.onRequest(async (req, res) => {
+  cors(req, res, async () => {
+    try {
+      const { userToken, groupId } = req.body;
+      const file = req.file;
+      const url = await buildGreenApiUrl(userToken, "setGroupPicture");
+
+      const form = new FormData();
+      form.append('file', file);
+      form.append('groupId', groupId);
+
+      const response = await axios.post(url, form, { headers: form.getHeaders() });
+      res.status(200).json(response.data);
+    } catch (error) {
+      console.error("Error setting group picture:", error);
+      res.status(500).json({ error: "Failed to set group picture" });
+    }
+  });
+});
+
+exports.getContacts = functions.https.onRequest(async (req, res) => {
+  cors(req, res, async () => {
+    try {
+      const { userToken } = req.query;
+      const url = await buildGreenApiUrl(userToken, "getContacts");
+
+      const response = await axios.get(url, { headers: { 'Content-Type': 'application/json' } });
+      res.status(200).json(response.data);
+    } catch (error) {
+      console.error("Error getting contacts:", error);
+      res.status(500).json({ error: "Failed to get contacts" });
+    }
+  });
+});
+
+exports.getGroupData = functions.https.onRequest(async (req, res) => {
+  cors(req, res, async () => {
+    try {
+      const { userToken, groupId } = req.body;
+      const url = await buildGreenApiUrl(userToken, "getGroupData");
+
+      const response = await axios.post(url, { groupId }, { headers: { 'Content-Type': 'application/json' } });
+      res.status(200).json(response.data);
+    } catch (error) {
+      console.error("Error getting group data:", error);
+      res.status(500).json({ error: "Failed to get group data" });
     }
   });
 });

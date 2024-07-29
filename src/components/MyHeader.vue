@@ -145,6 +145,7 @@ export default {
       menuItems: [
         { name: "My Contents", path: "/my-contents" },
         { name: "Content Creation", path: "/content-creation" },
+        { name: "whatsapp group creator", path: "/whatsappgroup-creator" }
         // { name: "Buy Credits", path: "/purchase-credits" },
       ],
       languageOptions: [
@@ -234,6 +235,7 @@ export default {
   box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.15);
   border-radius: 5px;
   width: max-content;
+  z-index: 1;
 }
 
 @keyframes jump {
