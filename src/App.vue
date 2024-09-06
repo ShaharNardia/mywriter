@@ -203,10 +203,6 @@ input[type="password"] {
   justify-content: center;
   margin-top: 6vh;
 }
-.vue-tel-input {
-  width: 85%;
-  /* margin-left: 2vh; */
-}
 .vti__input {
   padding-left: 0vh !important;
 }

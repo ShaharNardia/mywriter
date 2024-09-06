@@ -184,7 +184,7 @@ const openAI = async function (prompt, maxContentLength) {
   };
 
   const data = {
-    model: "gpt-4-0125-preview",
+    model: "gpt-4o-mini",
     messages: [
       {
         role: "user",

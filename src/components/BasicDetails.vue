@@ -27,13 +27,7 @@
     </div>
     <div class="marg-l-2">
       <label for="phoneNumber">Phone Number:</label>
-      <vue-tel-input
-        class="input"
-        v-model="user.phoneNumber"
-        @country-changed="handleCountryChanged"
-        :enabled-country-code="true"
-        :default-country="defaultCountry"
-      ></vue-tel-input>
+      <input type="text" id="phoneNumber" v-model="user.phoneNumber" />
     </div>
   </div>
   <div class="flexed">
@@ -77,7 +71,6 @@
   </div>
 </template>
 <script>
-import { VueTelInput } from "vue-tel-input";
 import { ref, reactive, onMounted } from "vue";
 
 export default {
