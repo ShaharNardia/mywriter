@@ -78,7 +78,6 @@ export default {
   emits: ['setBasicDetails'],
 
   components: {
-    VueTelInput,
   },
   setup(_, { emit }) {
     const user = reactive(JSON.parse(localStorage.getItem("user")) || {

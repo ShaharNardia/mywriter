@@ -21,7 +21,7 @@
             required
           />
         </div>
-        <div class="margin-top-10"><button type="submit">Login</button></div>
+        <div class="margin-top-10"><button type="submit" :disabled="isLoading">Login</button></div>
       </form>
     </div>
     <div class="center block margin-top-30">
@@ -29,6 +29,8 @@
     </div>
     <!-- Uncomment the following button if you want to enable phone login -->
     <!-- <button @click="loginWithPhone">Login with Phone</button> -->
+    <div v-if="isLoading" class="loader"></div>
+
     <div v-if="showModal" class="modal">
       <div class="modal-content">
         <span class="close" @click="closeModal">&times;</span>
@@ -49,6 +51,7 @@ import axios from "axios";
 export default {
   data() {
     return {
+      isLoading: false,
       email: "",
       password: "",
       showModal: false,
@@ -76,12 +79,15 @@ export default {
         });
     },
     loginWithEmailPassword() {
+      console.log("Logging in with email and password");
+      this.isLoading = true;
       const auth = getAuth();
       signInWithEmailAndPassword(auth, this.email, this.password)
         .then((res) => {
           //console.log(JSON.stringify(res.user));
           const user = res.user;
           localStorage.setItem("userToken", user.uid);
+          this.isLoading = false; // Hide loader after login process
           this.redirect(user.uid);
         })
         .catch((error) => {
@@ -89,26 +95,32 @@ export default {
           if (error.code === "auth/user-not-found") {
             // Redirect to the registration page
             this.$router.push("/set-up");
+            this.isLoading = false; // Hide loader after login process
           } else {
             // Show error modal for other errors
             this.showModal = true;
             this.modalMessage = error.message;
+            this.isLoading = false; // Hide loader after login process
           }
         });
     },
     loginWithGmail() {
+      this.isLoading = true; // Hide loader after login process
+
       const provider = new GoogleAuthProvider();
       const auth = getAuth();
       signInWithPopup(auth, provider)
         .then((userCredential) => {
           const user = userCredential.user;
           localStorage.setItem("userToken", user.uid);
+          this.isLoading = false; // Hide loader after login process
           this.redirect(user.uid);
         })
         .catch((error) => {
           this.showModal = true;
           this.modalMessage = error.message;
           console.error(error);
+          this.isLoading = false; // Hide loader after login process
         });
     },
     // loginWithPhone() {

@@ -24,7 +24,7 @@ function startPollingForLoginStatus() {
     const currentName = JSON.parse(localStorage.getItem('user'));
 
     if (currentStatus !== isLoggedIn.value) {
-      isLoggedIn.value = currentStatus;
+      isLoggedIn.value = currentStatus && !!currentName;
     }
     if (currentName !== user.value) {
       user.value = currentName?.firstName[0] + currentName?.lastName[0]; 
@@ -299,5 +299,23 @@ nav {
 
 .menu li select option {
   border: none;
+}
+
+.loader {
+  border: 16px solid #f3f3f3; /* Light grey */
+  border-top: 16px solid #3498db; /* Blue */
+  border-radius: 50%;
+  width: 120px;
+  height: 120px;
+  animation: spin 2s linear infinite;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  margin: -60px 0 0 -60px; /* Center the loader */
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 </style>

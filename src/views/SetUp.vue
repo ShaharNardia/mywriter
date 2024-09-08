@@ -76,7 +76,20 @@ export default {
       prefrencesHistory: {},
     };
   },
-  mounted() {},
+  mounted() {
+    axios
+      .get("https://getFormSettings-ibnrirhwvq-uc.a.run.app")
+      .then((response) => {
+        console.log(response.data);
+          localStorage.setItem("goalsList", JSON.stringify(response.data.goalsList));
+          localStorage.setItem("tonesList", JSON.stringify(response.data.tonesList));
+          localStorage.setItem("jobTypesList", JSON.stringify(response.data.jobTypesList));
+          localStorage.setItem("platformsList", JSON.stringify(response.data.platformsList));
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+  },
   methods: {
     goBack() {
       this.step--;

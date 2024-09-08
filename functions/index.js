@@ -1062,7 +1062,6 @@ async function runJob(jobData) {
   console.log("Running job:", jobData);
   // ...
 }
-
 // Function to seed collections with initial data
 async function seedCollections() {
   // Firestore reference
@@ -1346,7 +1345,6 @@ async function seedCollections() {
 
   console.log("Seeding completed.");
 }
-
 const getJobsByUserToken = async (userToken) => {
   try {
     const jobsCollection = db.collection("jobs");
@@ -1400,6 +1398,55 @@ exports.sendEmail = onRequest(async (request, response) => {
   });
 });
 
+
+// Green API functions starts here
+
+exports.getUserGreenApiSettings = onRequest(async (request, response) => {
+  const userToken = request.query.userToken;
+
+  try {
+    const greenApiSettingsCollection = db.collection("GreenApiSettings");
+    const querySnapshot = await greenApiSettingsCollection
+      .where("userToken", "==", userToken)
+      .get();
+
+    const greenApiSettings = querySnapshot.docs.map((doc) => doc.data());
+
+    response.status(200).json(greenApiSettings);
+  } catch (err) {
+    response
+      .status(500)
+      .json({ error: `Failed to get user GreenApiSettings: ${err}` });
+  }
+});
+exports.editUserGreenApiSettings = onRequest(async (request, response) => {
+  const userToken = request.query.userToken;
+  const newSettings = request.body; // Assuming new settings are sent in the request body
+  const docId = request.query.docId; // ה-docId מגיע מה-query של הבקשה
+
+  try {
+    const greenApiSettingsCollection = db.collection("GreenApiSettings").doc(docId);
+    const querySnapshot = await greenApiSettingsCollection
+      .where("userToken", "==", userToken)
+      .get();
+
+    if (querySnapshot.empty) {
+      return response.status(404).json({ error: "User settings not found" });
+    }
+
+    // Update each document found (you may only expect one document per userToken)
+    const batch = db.batch();
+    querySnapshot.docs.forEach((doc) => {
+      batch.update(doc.ref, newSettings); // Update with new settings
+    });
+
+    await batch.commit();
+
+    response.status(200).json({ message: "Settings updated successfully" });
+  } catch (err) {
+    response.status(500).json({ error: `Failed to update user settings: ${err}` });
+  }
+});
 exports.addGreenApiSettings = functions.https.onRequest(async (req, res) => {
   cors(req, res, async () => {
     try {
@@ -1421,7 +1468,6 @@ exports.addGreenApiSettings = functions.https.onRequest(async (req, res) => {
     }
   });
 });
-
 async function buildGreenApiUrl(userToken, endpoint) {
   try {
     const doc = await db.collection("GreenApiSettings").doc(userToken).get();
@@ -1436,7 +1482,6 @@ async function buildGreenApiUrl(userToken, endpoint) {
     throw error;
   }
 }
-
 exports.createGroup = functions.https.onRequest(async (req, res) => {
   cors(req, res, async () => {
     try {
@@ -1451,7 +1496,6 @@ exports.createGroup = functions.https.onRequest(async (req, res) => {
     }
   });
 });
-
 exports.setGroupAdmin = functions.https.onRequest(async (req, res) => {
   cors(req, res, async () => {
     try {
@@ -1466,7 +1510,6 @@ exports.setGroupAdmin = functions.https.onRequest(async (req, res) => {
     }
   });
 });
-
 exports.updateGroupName = functions.https.onRequest(async (req, res) => {
   cors(req, res, async () => {
     try {
@@ -1481,8 +1524,6 @@ exports.updateGroupName = functions.https.onRequest(async (req, res) => {
     }
   });
 });
-
-
 exports.addGroupParticipant = functions.https.onRequest(async (req, res) => {
   cors(req, res, async () => {
     try {
@@ -1497,7 +1538,6 @@ exports.addGroupParticipant = functions.https.onRequest(async (req, res) => {
     }
   });
 });
-
 exports.setGroupPicture = functions.https.onRequest(async (req, res) => {
   cors(req, res, async () => {
     try {
@@ -1517,7 +1557,6 @@ exports.setGroupPicture = functions.https.onRequest(async (req, res) => {
     }
   });
 });
-
 exports.getContacts = functions.https.onRequest(async (req, res) => {
   cors(req, res, async () => {
     try {
@@ -1532,7 +1571,6 @@ exports.getContacts = functions.https.onRequest(async (req, res) => {
     }
   });
 });
-
 exports.getGroupData = functions.https.onRequest(async (req, res) => {
   cors(req, res, async () => {
     try {
@@ -1547,6 +1585,9 @@ exports.getGroupData = functions.https.onRequest(async (req, res) => {
     }
   });
 });
+// Green API functions ends
+
+
 
 // const generateImage = async function (title) {
 //   let data = JSON.stringify({
